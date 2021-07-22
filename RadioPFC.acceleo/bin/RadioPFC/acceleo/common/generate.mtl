@@ -16,26 +16,33 @@ package [packageName/];
 
 public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 
+	static Integer RulePriority = [aRule.priority/];
+
 	public static String checkMode(String CurrentMode, boolean SampleValues_ASC, boolean SampleValues_DESC, double SecLevel, double CarrierFreq, String OpRole){
 
 		final String NewMode;
 
-		if([loop(aRule.leftside->filter(CompoundExp))/][loop(aRule.leftside->filter(SimpleExp))/]){
+		if([loopExp(aRule.leftside->filter(Expression))/]){
 			NewMode = [NewState(aRule.rightside->filter(ActionRadio))/]
 			return NewMode;
 		}
 		else{
-			return (CurrentMode + "(MANTEM MODO)");
+			return "MAINTAIN_CURRENT_MODE";
 		}
+	}
+
+	public static Integer getRulePriority(){
+		return RulePriority;
 	}
 }	
 	
 [/file]
 [/template]
 
-[template public condition(o : Operator) post (replaceAll('\n', '').trim())]
+[template public condition(o : Operator) post (replaceAll('\n', '').replaceAll(' ','').trim())]
 [for (c: Comparator | o->filter(Comparator)) separator('')]
 [if (c.Operation.toString()='equal')] == 
+[elseif (c.Operation.toString()='not_equal')] !=
 [elseif (c.Operation.toString()='greater_equal')] >=
 [elseif (c.Operation.toString()='greater')] >
 [elseif (c.Operation.toString()='less')] <
@@ -79,20 +86,23 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 
 [template public CompoundExp(c : CompoundExp) post (replaceAll('\n', '').replaceAll(' ','').trim())]
 [logicop(c.PrecedingLogicOp)/](
-[for (simpleExp: SimpleExp | c.expression->filter(SimpleExp)) separator('')]
+[for (Exp: Expression | c.expression) separator('')]
+[for (simpleExp: SimpleExp | Exp->filter(SimpleExp)) separator('')]
 [SimpleExp(simpleExp.PrecedingLogicOp,simpleExp.operand->filter(Attributes),simpleExp.operator,simpleExp.operand->filter(Strings),simpleExp.operand->filter(Num))/]
 [/for]
-[for (compoundExp: CompoundExp | c.expression->filter(CompoundExp)) separator('')]
+[for (compoundExp: CompoundExp | Exp->filter(CompoundExp)) separator('')]
 [CompoundExp(compoundExp)/]
+[/for]
 [/for])
 [/template]
 
-[template public loop(c : Set(CompoundExp)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
-[for (exp: CompoundExp | c ) separator('')][CompoundExp(exp)/][/for]
-[/template]
-
-[template public loop(s : Set(SimpleExp)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
-[for (simpleExp: SimpleExp | s ) separator('')]
+[template public loopExp(e : Set(Expression)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
+[for (Exp: Expression | e) separator('')]
+[for (simpleExp: SimpleExp | Exp->filter(SimpleExp)) separator('')]
 [SimpleExp(simpleExp.PrecedingLogicOp,simpleExp.operand->filter(Attributes),simpleExp.operator,simpleExp.operand->filter(Strings),simpleExp.operand->filter(Num))/]
+[/for]
+[for (compoundExp: CompoundExp | Exp->filter(CompoundExp)) separator('')]
+[CompoundExp(compoundExp)/]
+[/for]
 [/for]
 [/template]
