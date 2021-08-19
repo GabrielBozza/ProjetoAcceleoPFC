@@ -18,7 +18,7 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 
 	static Integer RulePriority = [aRule.priority/];
 
-	public static String checkMode(String CurrentMode, boolean SampleValues_ASC, boolean SampleValues_DESC, double SecLevel, double CarrierFreq, String OpRole){
+	public static String checkMode(String CurrentMode, boolean SNRValues_ASC, boolean SNRValues_DESC, double SecLevel, double CarrierFreq, String OpRole){
 
 		final String NewMode;
 
@@ -48,14 +48,14 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 [elseif (c.Operation.toString()='less')] <
 [elseif (c.Operation.toString()='less_equal')] <= [/if]
 [/for]
-[for (m: Math | o->asSequence()->at(1)->filter(Math)) separator('')]
+[for (m: Math | o->filter(Math)) separator('')]
 [if (m.Operation.toString()='plus')] + 
 [elseif (m.Operation.toString()='minus')] -
 [elseif (m.Operation.toString()='divided')] /
 [elseif (m.Operation.toString()='multiplication')] *
 [/if]
 [/for]
-[for (l: Logic | o->asSequence()->at(1)->filter(Logic)) separator('')]
+[for (l: Logic | o->filter(Logic)) separator('')]
 [if (l.Operation.toString()='and')] &&
 [elseif (l.Operation.toString()='or')] ||
 [elseif (l.Operation.toString()='not')] !
@@ -74,7 +74,7 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 "[n->asSequence()->at(1).newState/]";
 [/template]
 
-[template public SimpleExp(l: LogicOp, a :Set(Attributes),o: Operator, s:Set(Strings), n:Set(Num)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
+[comment][template public SimpleExp(l: LogicOp, a :Set(Attributes),o: Operator, s:Set(Strings), n:Set(Num)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
 [if (s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid'))] 
 [logicop(l)/]([a.name/][condition(o)/][n->asSequence()->at(1).value/])
 [elseif (s->asSequence()->at(1).value.toString().equalsIgnoreCase('true') or s->asSequence()->at(1).value.toString().equalsIgnoreCase('false'))]
@@ -82,13 +82,23 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 [elseif (not(s->asSequence()->at(1).value.toString().equalsIgnoreCase('true') or s->asSequence()->at(1).value.toString().equalsIgnoreCase('false')))]
 [logicop(l)/]([a.name/].equalsIgnoreCase("[s->asSequence()->at(1).value.toString()/]"))
 [/if]
+[/template][/comment]
+
+[template public SimpleExp(l: LogicOp, ba :Set(BoolAttributes), sa :Set(StringAttributes), na :Set(NumAttributes),o: Operator, s:Set(Strings), n:Set(Num), b:Set(Bool)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
+[if (s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid') and b->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid'))] 
+[logicop(l)/]([na.numAttr/][condition(o)/][n->asSequence()->at(1).value/])
+[elseif (not(b->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid')))]
+[logicop(l)/]([ba.boolAttr/][condition(o)/][b->asSequence()->at(1).value/])
+[elseif (not(s->asSequence()->at(1).value.toString().equalsIgnoreCase('true') or s->asSequence()->at(1).value.toString().equalsIgnoreCase('false')))]
+[logicop(l)/]([sa.stringAttr/].equalsIgnoreCase("[s->asSequence()->at(1).value.toString()/]"))
+[/if]
 [/template]
 
 [template public CompoundExp(c : CompoundExp) post (replaceAll('\n', '').replaceAll(' ','').trim())]
 [logicop(c.PrecedingLogicOp)/](
 [for (Exp: Expression | c.expression) separator('')]
 [for (simpleExp: SimpleExp | Exp->filter(SimpleExp)) separator('')]
-[SimpleExp(simpleExp.PrecedingLogicOp,simpleExp.operand->filter(Attributes),simpleExp.operator,simpleExp.operand->filter(Strings),simpleExp.operand->filter(Num))/]
+[SimpleExp(simpleExp.PrecedingLogicOp,simpleExp.operand->filter(BoolAttributes),simpleExp.operand->filter(StringAttributes),simpleExp.operand->filter(NumAttributes),simpleExp.operator,simpleExp.operand->filter(Strings),simpleExp.operand->filter(Num),simpleExp.operand->filter(Bool))/]
 [/for]
 [for (compoundExp: CompoundExp | Exp->filter(CompoundExp)) separator('')]
 [CompoundExp(compoundExp)/]
@@ -96,10 +106,21 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 [/for])
 [/template]
 
-[template public loopExp(e : Set(Expression)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
+[comment][template public loopExp(e : Set(Expression)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
 [for (Exp: Expression | e) separator('')]
 [for (simpleExp: SimpleExp | Exp->filter(SimpleExp)) separator('')]
 [SimpleExp(simpleExp.PrecedingLogicOp,simpleExp.operand->filter(Attributes),simpleExp.operator,simpleExp.operand->filter(Strings),simpleExp.operand->filter(Num))/]
+[/for]
+[for (compoundExp: CompoundExp | Exp->filter(CompoundExp)) separator('')]
+[CompoundExp(compoundExp)/]
+[/for]
+[/for]
+[/template][/comment]
+
+[template public loopExp(e : Set(Expression)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
+[for (Exp: Expression | e) separator('')]
+[for (simpleExp: SimpleExp | Exp->filter(SimpleExp)) separator('')]
+[SimpleExp(simpleExp.PrecedingLogicOp,simpleExp.operand->filter(BoolAttributes),simpleExp.operand->filter(StringAttributes),simpleExp.operand->filter(NumAttributes),simpleExp.operator,simpleExp.operand->filter(Strings),simpleExp.operand->filter(Num),simpleExp.operand->filter(Bool))/]
 [/for]
 [for (compoundExp: CompoundExp | Exp->filter(CompoundExp)) separator('')]
 [CompoundExp(compoundExp)/]
