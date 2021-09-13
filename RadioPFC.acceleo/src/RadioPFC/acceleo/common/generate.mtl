@@ -48,7 +48,7 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 [elseif (c.Operation.toString()='less')] <
 [elseif (c.Operation.toString()='less_equal')] <= [/if]
 [/for]
-[for (m: Mathematics | o->filter(Mathematics)) separator('')]
+[for (m: Math | o->filter(Math)) separator('')]
 [if (m.Operation.toString()='plus')] + 
 [elseif (m.Operation.toString()='minus')] -
 [elseif (m.Operation.toString()='divided')] /
@@ -85,12 +85,16 @@ public class [aRule.name.replaceAll(' ', '').trim().toUpperFirst()/] {
 [/template][/comment]
 
 [template public SimpleExp(l: LogicOp, ba :Set(BoolAttributes), sa :Set(StringAttributes), na :Set(NumAttributes),o: Operator, s:Set(Strings), n:Set(Num), b:Set(Bool)) post (replaceAll('\n', '').replaceAll(' ','').trim())]
-[if (s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid') and b->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid'))] 
+[if (s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid') and b->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid') and not(n->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid')))] 
 [logicop(l)/]([na.numAttr/][condition(o)/][n->asSequence()->at(1).value/])
 [elseif (not(b->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid')))]
 [logicop(l)/]([ba.boolAttr/][condition(o)/][b->asSequence()->at(1).value/])
-[elseif (not(s->asSequence()->at(1).value.toString().equalsIgnoreCase('true') or s->asSequence()->at(1).value.toString().equalsIgnoreCase('false')))]
+[elseif (not(s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid')) and o->filter(Comparator)->asSequence()->at(1).Operation.toString()='equal')]
 [logicop(l)/]([sa.stringAttr/].equalsIgnoreCase("[s->asSequence()->at(1).value.toString()/]"))
+[elseif (not(s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid')) and o->filter(Comparator)->asSequence()->at(1).Operation.toString()='not_equal')]
+[logicop(l)/](![sa.stringAttr/].equalsIgnoreCase("[s->asSequence()->at(1).value.toString()/]"))
+[elseif (s->asSequence()->at(1).value.toString().equalsIgnoreCase('invalid'))]
+[logicop(l)/]([condition(o)/][ba.boolAttr/])
 [/if]
 [/template]
 
